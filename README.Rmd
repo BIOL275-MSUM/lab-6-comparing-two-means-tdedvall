@@ -1,0 +1,106 @@
+---
+title: "Lab 6 Comparing two means"
+author: "Tyler Edvall"
+date: "04/22/21"
+output: github_document
+---
+
+Researchers studying the number of electric fish species living in various parts of the Amazon basin were interested in whether the presence of tributaries affected the local number of electric fish species in the main rivers (Fernandes et al. 2004).
+
+They counted the number of electric fish species above and below the entrance point of a major tributary at 12 different river locations.
+
+The data is provided in your GitHub repository.
+
+For each question below, write a sentence answering the question and show the code you used to come up with the answer, if applicable.
+
+## Question A
+
+> What is the mean difference in the number of species between areas upstream and downstream of a tributary? What is the 95% confidence interval of this mean difference. Show your code and write a sentence giving your answer
+
+```{r}
+
+# load packages -----------------------------------------------------------
+
+library(tidyverse)
+
+
+# read data ---------------------------------------------------------------
+
+fish <- read_csv("chap12q19ElectricFish.csv")
+
+fish_long <- 
+  pivot_longer(fish, speciesUpstream:speciesDownstream,
+               names_to = "location",
+               values_to = "species") %>% 
+  mutate(location = str_remove(location, c("species"))) %>% 
+  print()
+
+
+# data compiling ----------------------------------------------------------------
+
+fish_long_summary <-
+  fish_long %>% 
+  group_by(location) %>% 
+  summarize(
+    n = n(),
+    mean = mean(species),
+    sd = sd(species),
+    sem = sd/sqrt(n),
+    upper = mean + 1.96 * sem,
+    lower = mean - 1.96 * sem
+  ) %>% 
+  print()
+
+
+t.test(formula = species ~ location, data = fish_long)
+
+16.4-14.6
+
+```
+
+The mean difference is 1.8 and the 95% confidence interval of the mean is -4.587031 and 8.253697 between the number of species in the upstream versus the downstream areas of the tributaries. 
+
+
+## Question B
+
+> Test the hypothesis that the tributaries have no effect on the number of species of electric fish.
+
+
+The p-value is 0.5596, which is greater than 0.05. This would indicate that we fail to reject the null hypothesis. 
+
+
+## Question C
+
+> State the assumptions that you had to make to complete parts (A) and (B). Create a graph to assess whether one of those assumptions was met.
+
+
+We have to assume that the data is distributed normally and each of the two samples is a random sample from the population.
+
+```{r}
+
+fish_long %>% 
+  ggplot(aes(x = species)) +
+  geom_histogram(
+    aes(fill = location), 
+    bins = 15, 
+    alpha = 0.5, 
+    position = "identity"
+  ) +
+  scale_fill_manual(values = c("red","cyan4")) +
+  theme_minimal()
+
+
+fish_long %>% 
+  ggplot(aes(x = location, y = species)) +
+  geom_jitter(aes(color = location), 
+              shape = 16, alpha = 0.3, width = 0.4) +
+  geom_errorbar(aes(y = mean, ymax = upper, ymin = lower), 
+                data = fish_long_summary, width = .1) +
+  geom_point(aes(y = mean), 
+             data = fish_long_summary) +
+  scale_color_manual(values = c("red","cyan4")) +
+  theme_minimal() +
+  guides(color = "none")
+
+
+```
