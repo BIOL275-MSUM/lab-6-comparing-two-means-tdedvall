@@ -163,7 +163,7 @@ fish_long %>%
 fish_long %>% 
   ggplot(aes(x = location, y = species)) +
   geom_jitter(aes(color = location), 
-              shape = 16, alpha = 0.3, width = 0.4) +
+              shape = 16, alpha = 1, width = 0.4) +
   geom_errorbar(aes(y = mean, ymax = upper, ymin = lower), 
                 data = fish_long_summary, width = .1) +
   geom_point(aes(y = mean), 
@@ -174,3 +174,98 @@ fish_long %>%
 ```
 
 ![](README_files/figure-gfm/unnamed-chunk-2-2.png)<!-- -->
+
+## ANOVA
+
+Fiddler crabs are so called because males have a greatly enlarged
+“major” claw, which is used to attract females and to defend a burrow.
+
+Darnell and Munguia (2011) recently suggested that this appendage might
+also act as a heat sink, keeping males cooler while out of the burrow on
+hot days.
+
+To test this, they placed four groups of crabs into separate plastic
+cups and supplied a source of radiant heat (60-watt light bulb) from
+above. The four groups were intact male crabs, male crabs with the major
+claw removed; male crabs with the other (minor) claw removed (control);
+and intact female fiddler crabs.
+
+They measured the body temperature of crabs every 10 minutes for 1.5
+hours. These measurements were used to calculate a rate of heat gain for
+every individual crab in degrees C/log minute. Rates of heat gain for
+all crabs are provided in the accompanying data file.
+
+### Question D
+
+Graph the distribution of body temperatures for each crab type:
+
+``` r
+library(readr)
+crab <- read_csv("chap15q27FiddlerCrabFans.csv")
+```
+
+    ## 
+    ## -- Column specification --------------------------------------------------------
+    ## cols(
+    ##   crabType = col_character(),
+    ##   bodyTemperature = col_double()
+    ## )
+
+``` r
+crab %>% 
+  ggplot(aes(x = bodyTemperature)) +
+  geom_histogram(
+    bins = 8, 
+    position = "identity",
+    na.rm = TRUE
+  ) + facet_wrap(~ crabType) +
+  theme_minimal()
+```
+
+![](README_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+
+### Question E
+
+Does body temperature varies among crab types? State the null and
+alternative hypothesis, conduct and ANOVA, and interpret the results.
+
+``` r
+aov_crab_temp_species <-
+  aov(bodyTemperature ~ crabType, data = crab)
+
+aov_crab_temp_species
+```
+
+    ## Call:
+    ##    aov(formula = bodyTemperature ~ crabType, data = crab)
+    ## 
+    ## Terms:
+    ##                 crabType Residuals
+    ## Sum of Squares  2.641310  3.467619
+    ## Deg. of Freedom        3        80
+    ## 
+    ## Residual standard error: 0.2081952
+    ## Estimated effects may be unbalanced
+    ## 1 observation deleted due to missingness
+
+``` r
+summary(aov_crab_temp_species)
+```
+
+    ##             Df Sum Sq Mean Sq F value Pr(>F)    
+    ## crabType     3  2.641  0.8804   20.31  7e-10 ***
+    ## Residuals   80  3.468  0.0433                   
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 1 observation deleted due to missingness
+
+Null Hypothesis: The mean body temperature is equal among all crab
+species.
+
+Alternative Hypothesis: At least one mean body temperature is different
+from the others.
+
+The P-value is 7e-10, which is below any alpha level we could choose.
+Due to this, we would reject the null hypothesis. The conclusion that
+can be made is that the mean body temperature for at least one species
+is different from the means for the other species.
